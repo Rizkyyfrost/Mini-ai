@@ -1,1 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini AI Chat</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+        }
 
+        .chat-container {
+            width: 90%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80%;
+        }
+
+        .chat-header {
+            background: linear-gradient(90deg, #4a90e2, #357abd);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.4em;
+            font-weight: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .chat-header::after {
+            content: '🤖';
+            position: absolute;
+            right: 10px;
+            animation: bounce 2s infinite;
+            font-size: 1.5em;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+            background-color: #eaf1f7;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1em;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+            background-color: #f9f9f9;
+        }
+
+        .chat-footer input:focus {
+            border-color: #4a90e2;
+        }
+
+        .chat-footer button {
+            margin-left: 10px;
+            padding: 10px 15px;
+            border: none;
+            background: #4a90e2;
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .chat-footer button:hover {
+            background: #357abd;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            max-width: 80%;
+            font-size: 0.95em;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .user-message {
+            background: #4a90e2;
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .ai-message {
+            background: #fff;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+            border: 1px solid #ddd;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .footer-credit {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9em;
+            color: #666;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            font-weight: bold;
+            animation: fadeInFooter 1.5s ease-in-out;
+            position: relative;
+        }
+
+        .footer-credit::after {
+            content: "⚡";
+            position: absolute;
+            right: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes fadeInFooter {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            Mini AI Chat
+        </header>
+        <div id="chat-box" class="chat-box"></div>
+        <footer class="chat-footer">
+            <input type="text" id="user-input" placeholder="Tulis pesan..." autocomplete="off">
+            <button id="send-button">➤</button>
+        </footer>
+        <div class="footer-credit">
+            Powered by Rizky
+        </div>
+    </div>
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const CHAT_HISTORY_KEY = "chat_history";
+
+        const responses = {
+            "hi": "Hai! Aku Mini AI. Siapa kamu?",
+            "siapa kamu": "Aku adalah Mini AI, asisten kecil yang siap membantu kamu!",
+            "apa kabar": "Aku baik-baik saja! Bagaimana dengan kamu?",
+            "halo": "Halo! Ada yang bisa kubantu?",
+            "nama kamu siapa": "Namaku Mini AI. Nama kamu siapa?",
+            "terima kasih": "Sama-sama! Ada lagi yang ingin kamu tanyakan?",
+            "cuy": "Kenapa ngab ada pernyataan tidak ?",
+            "siang": "Iya ada apa",
+            "bisa jawab pertanyaan ?": "Tidak karena fungsiku terbatas",
+            "aku bosan": "Mari kita usir kebosanan ini! Ada banyak cara untuk membuat suasana lebih menyenangkan. Bagaimana kalau kita coba salah satu ide ku tentang berbagi cerita lucu ,Apa ini terdengar menarik untuk Anda? 😊",
+            "darimana kamu berasal ?": "Aku adalah MIni Ai, asisten AI buatan Moolecon dev. Aku tidak berasal dari tempat tertentu seperti manusia, tetapi aku dibuat dari banyak data dan informasi untuk membantu serta berinteraksi dengan Anda.Apa Anda tertarik untuk berbicara tentang sesuatu yang lain atau mungkin ingin tahu lebih banyak tentang teknologi dan dunia AI? 😊",
+            "apa yang dimaksud dengan internet ?": "Internet adalah jaringan global yang menghubungkan jutaan komputer dan perangkat di seluruh dunia, memungkinkan pertukaran informasi dan komunikasi melalui berbagai platform digital.",
+            "bagaimana cara menjaga kesehatan ?": "Menjaga kesehatan melibatkan pola makan seimbang, berolahraga secara teratur, cukup tidur, mengelola stres, serta melakukan pemeriksaan kesehatan rutin",
+            "oke": "Baik terimakasih telah menunggu",
+            "ya": "Ya ? bisa jelaskan maksud anda ?",
+            "sama sama": "Siap kapten 🔥",
+            "iya": "Senang bisa membantumu ! Jika ada hal lain yang perlu kamu tanyakan, jangan ragu untuk memberitahu asisten pintarmu ya",
+            "kamu tau memek ?": "Maaf itu terlalu sensitif kawan",
+            "terima kasih": "Sama sama , tugasku adalah membantumu 🥳",
+            "bisakah kamu membuka link ?": "Bisa silahkan saja kirimkan link tersebut agar dapat diproyeksikan",
+            "mana katanya bisa": "Tautan/perintah invalid coba lagi",
+            "bantuin aku buatkan ppt": "Maaf aku tidak dirancang untuk membuat ppt kawan",
+            "sekarang hari apa ?": "Untuk hari bisa Kamu lihat di kalender kawan apa perlu diarahkan ke kalender ?",
+            "hai hai": "Hai juga bagaimana kabarmu ?",
+            "kabarku baik": "Syukurlah kawan",
+            "hello": "Halo juga",
+            "p": "Ga sopan lu p, p, p, dikira Ai ini binatang apa",
+            "kamu tau apa aja ?": "Aku tahu tentang skala linear - middle programming sistematis",
+            "wah hebat ya": "kehebatanku biasa saja dihadapan sang pencipta manusia itu sendiri 😇",
+            "kamu tau film yang bagus ?": "Maaf ya kawan , progres load seri beta masih sangat dikit sehingga belum bisa 😅",
+            "bisa bantu saya ?": "tentu saja kawan , asalkan pertanyaan itu tersedia di program beta kami hahahaha",
+            "assalamualaikum": "Waalaikumsalam juragan ada yang bisa dibantu ?",
+            "hai apa kabar ?": "kabarku baik baik saja bagaimana denganmu kawan ?",
+            "handphone adalah ?": "Handphone adalah perangkat elektronik yang digunakan untuk komunikasi melalui telepon dan pesan, serta memiliki berbagai fitur seperti internet, kamera, dan aplikasi multimedia.",
+            "apa itu kendaraan ?": "Kendaraan adalah alat transportasi yang digunakan untuk memindahkan orang atau barang dari satu tempat ke tempat lain, baik di darat, air, maupun udara. Contohnya termasuk mobil, motor, kapal, dan pesawat.",
+            "inti neutron adalah ?": "Inti neutron adalah bagian dari inti atom yang terdiri dari neutron, partikel subatomik tanpa muatan listrik. Neutron bersama proton membentuk inti atom, memberikan massa utama atom, dan menjaga kestabilan inti melalui gaya nuklir kuat.",
+            "memek": "bertaubatlah kawan janganlah terus bermaksiat dibumi",
+            "bocah": "Not response 404",
+            "anjing lu": "tidak baik menyebutkan nama hewan kepada sesama kawan",
+            "programmer adalah ?": "Programmer adalah seseorang suka yang menulis, menguji, dan memelihara kode untuk membuat perangkat lunak atau aplikasi komputer bekerja sesuai fungsinya. Mereka menggunakan berbagai bahasa pemrograman seperti Python, Java, atau C++ untuk memecahkan masalah dan menciptakan solusi digital",
+            "kota utama di Indonesia !": "Kota-kota utama di Indonesia meliputi Jakarta, Surabaya, Bandung, Medan, Makassar, Denpasar, Semarang, dan Yogyakarta",
+            "sekarang hari apa ?": "Hari hari di mana kamu menjalani kesuksesan 😅",
+            "snapdragon adalah ?": "Snapdragon adalah prosesor dan chipset yang dibuat oleh Qualcomm, digunakan dalam berbagai perangkat mobile seperti smartphone, tablet, dan perangkat IoT. Snapdragon terkenal karena kinerja tinggi dan efisiensinya dalam mendukung konektivitas dan grafik.",
+            "kenapa bumi nggak jatuh ke lubang hitam aja sekalian?": "Karena gravitasi lubang hitam nggak sampai ke orbit kita, untungnya!",  
+"kok bisa matahari panas banget tapi nggak meledak?": "Karena dia punya keseimbangan tekanan gas dan gravitasi, bos!",  
+"gimana caranya air di awan bisa berat tapi tetep ngambang?": "Karena partikel airnya kecil banget, jadi bisa nebeng angin di atas!",  
+"beneran ada alien nggak sih?": "Kemungkinannya ada, tapi mereka mungkin males main ke bumi wkwk.",  
+"kalau nggak ada gravitasi, kita bakal gimana?": "Ya, ngambang-ngambang aja, kaya balon lepas gas!",  
+"kenapa langit biru, nggak ungu?": "Karena molekul atmosfer nyebar cahaya biru lebih efektif, bro!",  
+"bisa nggak sih bikin mesin waktu beneran?": "Secara teori mungkin, tapi teknologinya masih jauh banget cuy.",  
+"kok dinosaurus bisa punah tapi ayam nggak?": "Karena dinosaurus nggak kepikiran jadi kecil dan makan jagung, ayam lebih pintar bertahan!",  
+"kenapa listrik nggak bisa kita lihat?": "Karena elektron geraknya terlalu cepet, mata kita kalah fokus!",  
+"beneran ada dimensi lain nggak?": "Katanya sih ada, tapi kita cuma bisa menduga-duga sambil ngelamun.",  
+"kok bisa sih otak kecil tapi pinter banget?": "Karena efisiensi otak kita itu masterpiece evolusi, coy!",  
+"kenapa bulan nggak jatuh ke bumi?": "Karena dia muter terus sambil kena gaya gravitasi bumi, kayak nge-spin!",  
+"bisa nggak kita hidup tanpa oksigen?": "Nggak bisa, kecuali jadi alien atau robot!",  
+"kenapa cacing tanah nggak punya mata?": "Karena dia nggak butuh, gelap terus hidupnya di bawah tanah wkwk.",  
+"kenapa suara di luar angkasa nggak kedengeran?": "Karena di sana vakum, nggak ada udara buat gelombang suara lewat!",  
+"kok bisa ada hujan meteor?": "Karena serpihan batu luar angkasa kebakar pas masuk atmosfer, efeknya wow!",  
+"kenapa waktu relatif bisa beda di tempat lain?": "Karena gravitasi dan kecepatan bikin waktu jadi fleksibel, ala Einstein!",  
+"kenapa tubuh kita nggak ngeluarin listrik kayak belut?": "Karena kita nggak punya organ penghasil listrik, cuma tenaga otot doang.",  
+"kok samudra bisa asin?": "Karena garam dari batuan larut dan ngumpul di laut sejak jaman baheula.",  
+"kenapa magnet punya kutub utara dan selatan?": "Karena susunan atomnya bikin medan magnetnya teratur kayak kompas!",  
+"bisa nggak kita bikin matahari buatan?": "Bisa sih, namanya reaktor fusi, tapi ribet banget bikinnya!",  
+"kenapa ada lava di gunung berapi?": "Karena kerak bumi tipis, jadi magma dari dalam bumi bisa keluar!",  
+"kok otak kita bisa mimpi?": "Karena otak aktif terus walau tidur, dia suka bikin 'film random' sendiri wkwk.",  
+"kenapa cahaya bintang bisa sampai ke bumi?": "Karena dia cepet banget, 300 ribu km/detik, nggak ada yang bisa ngehalangin kecuali awan tebal!",  
+"kok galaksi nggak tabrakan satu sama lain?": "Sebenarnya bisa tabrakan, tapi jaraknya jauh banget dan waktunya milyaran tahun, sabar aja!",
+"kenapa internet lemot?": "Mungkin kuotamu tinggal sekarat, bro!",  
+"kok bensin makin mahal?": "Karena minyak dunia naik, sama kaya ekspektasi orang tua ke anaknya.",  
+"kenapa dia nggak bales chat aku?": "Mungkin lagi ngecas hati buat orang lain wkwk.",  
+"bisa nggak jadi kaya tanpa kerja?": "Bisa, kalau kamu anak sultan atau menang lotre.",  
+"kenapa aku susah move on?": "Karena otakmu suka replay adegan lama, bro.",  
+"kok wifi tetangga nggak bisa kebobol?": "Enkripsi zaman sekarang udah level dewa, bos.",  
+"kenapa aku nggak naik gaji?": "Mungkin bosmu nggak liat effortmu, atau kamu kurang cari kerjaan baru.",  
+"kok hujan nggak berhenti-berhenti?": "Mungkin langit lagi galau berat, bro.",  
+"kenapa aku susah tidur?": "Karena kamu scroll HP sampai ayam bangun.",  
+"kok makanan sehat rasanya nggak enak?": "Karena yang sehat biasanya kurang MSG wkwk.",
+"kenapa duit cepet abis?": "Mungkin dompetmu bocor ke tempat jajan.",  
+"bisa nggak kerja tanpa stres?": "Bisa, asal kerja jadi tester kasur.",  
+"kenapa orang suka drama?": "Karena hidup mereka butuh plot twist biar nggak bosan.",  
+"kok HP aku cepet panas?": "Mungkin HP-mu multitasking kayak anak magang.",  
+"kenapa aku nggak pernah menang giveaway?": "Karena rejekimu lagi ngantri di tempat lain, sabar!",  
+"kenapa temenku bawaannya nyebelin?": "Mungkin dia kurang ngemil biar lebih happy.",  
+"kok tetangga berisik banget?": "Mungkin dia lagi bikin konser gratis.",  
+"bisa nggak belajar sambil rebahan?": "Bisa, tapi efeknya ngantuk doang.",  
+"kenapa susah banget bangun pagi?": "Karena kasurmu magnetnya level pro.",  
+"kenapa makanan enak itu nggak sehat?": "Karena dunia nggak pernah adil wkwk.",  
+"kok baterai HP cepet habis?": "Kamu main TikTok 24/7, jelas aja boros.",  
+"kenapa cowok suka ngilang pas PDKT?": "Mungkin lagi ngecek stok di hati cewek lain.",  
+"kenapa kerjaan nggak pernah kelar?": "Karena kamu scrolling lebih cepet dari kerja.",  
+"kenapa duit receh susah dicari?": "Karena semua receh udah berubah jadi kembalian parkir.",  
+"kok aku nggak bisa fokus belajar?": "Karena notifikasi HP lebih menggoda dari buku.",
+"kenapa listrik suka mati tiba-tiba?": "Karena gangguan pada distribusi daya, seperti kelebihan beban, perawatan jaringan, atau kerusakan alat transformator,",  
+"kok dia nggak suka aku?": "Mungkin secara psikologis, dia tidak menemukan ketertarikan emosional atau kesamaan nilai,",  
+"kenapa jalanan macet terus?": "Karena kepadatan kendaraan melebihi kapasitas jalan, ditambah kurangnya manajemen lalu lintas yang efisien,",  
+"kenapa aku suka overthinking?": "Karena otak cenderung fokus pada masalah untuk melindungi diri dari risiko, berdasarkan teori bias kognitif,",  
+"kok saldo ATM aku tinggal lima ribu?": "Karena perilaku konsumtif didukung oleh impuls belanja, seperti yang dijelaskan dalam teori perilaku konsumen,",  
+"kenapa ayam duluan daripada telur?": "Secara biologis, mutasi genetik pertama terjadi dalam tubuh ayam purba, bukan pada telur yang dihasilkan,",  
+"kenapa aku nggak diajak jalan-jalan?": "Bisa jadi karena dalam teori hubungan sosial, komunikasi yang kurang memengaruhi kedekatan interpersonal,",  
+"kok kerjaan ini susah banget?": "Karena tugas yang kompleks membutuhkan lebih banyak kapasitas kognitif, sesuai dengan teori beban kognitif,",  
+"kenapa nggak ada yang percaya sama aku?": "Karena tingkat kepercayaan orang dipengaruhi oleh konsistensi tindakan dan kredibilitas, seperti dijelaskan dalam teori kepercayaan sosial,",  
+"kok baterai remote cepet habis?": "Karena baterai alkalin memiliki umur pendek jika digunakan terus-menerus, dan self-discharge mempercepat habisnya energi,",  
+"kenapa langit warnanya nggak pink?": "Karena hamburan Rayleigh lebih kuat terhadap cahaya biru daripada cahaya merah atau pink,",  
+"kenapa disuruh minum 8 gelas sehari?": "Karena tubuh manusia membutuhkan sekitar 2-2,5 liter cairan untuk menggantikan air yang hilang melalui metabolisme, berdasarkan panduan hidrasi,",  
+"kok pulsa suka hilang sendiri?": "Karena ada layanan langganan otomatis (VAS) yang diaktifkan tanpa disengaja, sesuai kebijakan operator telekomunikasi,",  
+"kenapa kucing suka tidur lama?": "Karena kucing adalah karnivora yang butuh energi besar untuk berburu, sehingga metabolisme mereka mendukung tidur panjang,",  
+"kenapa burung bisa terbang?": "Karena struktur tubuhnya, seperti tulang yang ringan dan otot terbang yang kuat, sesuai dengan prinsip aerodinamika,",  
+"kok barang diskon tetep mahal?": "Karena harga awal biasanya sudah dimark-up terlebih dahulu, sesuai teori strategi penetapan harga,",  
+"kenapa ada orang yang nggak bisa berenang?": "Karena koordinasi tubuh dan keterampilan motorik dipengaruhi oleh pengalaman dan pembelajaran awal,",  
+"kenapa hati ini suka galau?": "Karena hormon dopamin dan kortisol meningkat saat mengalami stres atau keraguan emosional,",  
+"kok charger aku lama banget ngisi baterai?": "Karena arus keluaran charger rendah, dan resistansi kabel dapat memperlambat pengisian daya baterai,",  
+"kenapa olahraga bikin capek?": "Karena tubuh memproduksi asam laktat saat otot bekerja keras, yang menyebabkan rasa lelah,",  
+"kok hujan deras pas mau keluar rumah?": "Karena curah hujan dipengaruhi oleh perubahan tekanan atmosfer dan angin lokal, sesuai prinsip meteorologi,",  
+"kenapa waktu cepat berlalu pas weekend?": "Karena dalam teori persepsi waktu, aktivitas yang menyenangkan membuat otak merasa waktu berjalan lebih cepat,",  
+"kenapa temen suka ngilang pas kita butuh?": "Karena prioritas sosial setiap orang berbeda, sesuai dengan teori pilihan rasional,",  
+"kok belanja di mall bikin dompet langsung bolong?": "Karena mall didesain dengan psikologi konsumen untuk menarik perhatian dan meningkatkan impuls belanja,",
+"kenapa air laut asin?": "Karena air hujan membawa mineral dari daratan ke laut, termasuk garam, yang terus terakumulasi selama jutaan tahun,",  
+"kenapa matahari terlihat kuning?": "Karena atmosfer bumi menyebarkan cahaya biru lebih banyak, menyisakan warna merah dan kuning yang lebih dominan,",  
+"kenapa suara kita berubah di rekaman?": "Karena kita terbiasa mendengar suara sendiri melalui resonansi tulang tengkorak, bukan seperti yang terdengar dari luar,",  
+"kenapa bumi berputar?": "Karena momentum sudut yang diperoleh sejak pembentukan tata surya, yang terus berlangsung tanpa hambatan signifikan,",  
+"kenapa es mencair di suhu ruangan?": "Karena energi panas dari lingkungan meningkatkan gerakan molekul air, menyebabkan es berubah menjadi cair,",
+ };
+
+        window.onload = () => {
+            const savedChatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
+            savedChatHistory.forEach(chat => appendMessage(chat.sender, chat.message, chat.className));
+        };
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+  function saveMessage(sender, message, className) {
+    const chatHistory = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY)) || [];
+    chatHistory.push({ sender, message, className });
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
+}
+
+function sendMessage() {
+    const userMessage = userInput.value.trim();
+    if (!userMessage) return;
+
+    appendMessage('User', userMessage, 'user-message');
+    saveMessage('User', userMessage, 'user-message');
+    userInput.value = '';
+
+    setTimeout(function() {
+        respondToMessage(userMessage);
+    }, 1000);
+}
+
+function appendMessage(sender, message, className) {
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = message;
+    messageDiv.className = `message ${className}`;
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function respondToMessage(userMessage) {
+    const normalizedMessage = userMessage.trim().toLowerCase();
+    const aiResponse = responses[normalizedMessage] || "Perhatikan tanda koma / tanya , karena sistem masih dalam program Beta";
+    appendMessage('Mini AI', aiResponse, 'ai-message');
+    saveMessage('Mini AI', aiResponse, 'ai-message');
+}
+    </script>
+</body>
+</html>
